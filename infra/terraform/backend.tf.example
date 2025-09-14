@@ -1,0 +1,8 @@
+# Backend configuration for Terraform state
+# Copy this to backend.tf and customize with your values
+
+bucket         = "personal-dev-terraform-state"
+key            = "rag/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "personal-dev-terraform-locks"
+encrypt        = true
