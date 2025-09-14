@@ -61,8 +61,8 @@ graph TB
 
 ### 1. Clone & Setup
 ```bash
-git clone <your-repo-url>
-cd bedrock-s3-vector-index-rag
+gh repo clone vamsikumargudala/aws-bedrock-document-chat
+cd aws-bedrock-document-chat
 cp .env.example .env
 ```
 
