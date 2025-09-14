@@ -1,0 +1,169 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install uv
+      run: |
+        pip install uv
+
+    - name: Install dependencies
+      run: |
+        uv pip install --system -e .
+        uv pip install --system pytest pytest-asyncio pytest-cov httpx pytest-mock
+
+    - name: Lint with flake8
+      run: |
+        # Install flake8 if not already installed
+        uv pip install --system flake8
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 server/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 server/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Type check with mypy
+      run: |
+        uv pip install --system mypy types-requests
+        mypy server/ --ignore-missing-imports || true
+
+    - name: Run unit tests
+      run: |
+        pytest tests/unit/ -v --cov=server --cov-report=xml --cov-report=term-missing
+
+    - name: Run integration tests
+      run: |
+        pytest tests/integration/ -v
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker images
+      run: |
+        docker compose build
+
+    - name: Test Docker containers
+      run: |
+        docker compose up -d
+        sleep 10
+        # Test health endpoint
+        curl -f http://localhost:8000/health || exit 1
+        docker compose down
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install security tools
+      run: |
+        pip install bandit safety
+
+    - name: Run bandit security check
+      run: |
+        bandit -r server/ -f json -o bandit-report.json || true
+
+    - name: Run safety check
+      run: |
+        pip freeze | safety check --json --output safety-report.json || true
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [test, docker-build, security-scan]
+    if: github.ref == 'refs/heads/develop'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to staging
+      run: |
+        echo "🚀 Deploying to staging environment"
+        # Add your staging deployment commands here
+        # Example: kubectl apply -f k8s/staging/
+        echo "✅ Staging deployment complete"
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [test, docker-build, security-scan]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to production
+      run: |
+        echo "🚀 Deploying to production environment"
+        # Add your production deployment commands here
+        # Example: kubectl apply -f k8s/production/
+        echo "✅ Production deployment complete"
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [test, docker-build, security-scan]
+    if: always()
+
+    steps:
+    - name: Notify on success
+      if: success()
+      run: |
+        echo "✅ All checks passed! Ready for deployment."
+
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "❌ Some checks failed. Please review the logs."
