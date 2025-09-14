@@ -15,7 +15,8 @@ app = FastAPI(title="Personal RAG with Bedrock S3 Vector Index")
 async def health_check():
     return {
         "status": "healthy",
-        "client_type": client_type if client_type else "not initialized"
+        "client_type": client_type if client else "not initialized",
+        "bedrock_client": "initialized" if client else "not initialized"
     }
 
 # Add CORS middleware
