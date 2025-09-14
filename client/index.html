@@ -1,1 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Assistant - AWS Bedrock</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>RAG Assistant</h2>
+                <button id="new-chat" class="new-chat-btn">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    New Chat
+                </button>
+            </div>
 
+            <div class="sidebar-content">
+                <div class="settings-section">
+                    <h3>Settings</h3>
+                    <div class="setting-item">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="dark-mode-toggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span>Dark Mode</span>
+                    </div>
+                    <div class="setting-item">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="stream-mode" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <span>Stream Responses</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>System Status</h3>
+                    <div class="status-item">
+                        <span class="status-dot" id="connection-status"></span>
+                        <span id="status-text">Connecting...</span>
+                    </div>
+                    <div class="status-details" id="status-details"></div>
+                </div>
+
+                <div class="sources-section" id="sources-section">
+                    <h3>Sources</h3>
+                    <div id="sources-list" class="sources-list"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <div class="chat-header">
+                <button class="menu-toggle" id="menu-toggle">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+                <h1>Chat with your Documents</h1>
+                <div class="header-actions">
+                    <button id="clear-chat" class="icon-btn" title="Clear chat">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="messages-container" id="messages-container">
+                <div class="welcome-message">
+                    <h2>Welcome to RAG Assistant</h2>
+                    <p>Ask questions about your documents and get intelligent answers powered by AWS Bedrock.</p>
+                    <div class="suggested-prompts">
+                        <button class="prompt-chip" data-prompt="What documents do you have access to?">
+                            What documents are available?
+                        </button>
+                        <button class="prompt-chip" data-prompt="Give me a summary of the main topics">
+                            Summarize main topics
+                        </button>
+                        <button class="prompt-chip" data-prompt="Help me understand the key concepts">
+                            Explain key concepts
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-container">
+                    <textarea
+                        id="message-input"
+                        class="message-input"
+                        placeholder="Ask a question about your documents..."
+                        rows="1"
+                    ></textarea>
+                    <div class="input-actions">
+                        <span class="char-count" id="char-count">0</span>
+                        <button id="send-btn" class="send-btn" disabled>
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="input-hint">Press Enter to send, Shift+Enter for new line</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
