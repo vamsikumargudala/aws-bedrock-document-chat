@@ -11,6 +11,10 @@ load_dotenv()
 
 app = FastAPI(title="Personal RAG with Bedrock S3 Vector Index")
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
